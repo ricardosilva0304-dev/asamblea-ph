@@ -76,39 +76,47 @@ export default function PreguntaEnVivo() {
     }
 
     // === RENDERIZADO VISUAL ===
+    const botonBase = "flex-1 py-6 text-xl font-black rounded-2xl transition-all active:scale-95 shadow-lg border-b-4"
+
     if (!preguntaActiva) {
         return (
-            <div className="p-8 bg-white border rounded-xl text-center shadow-sm">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500 text-lg">Esperando la próxima votación...</p>
+            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm text-center">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl">⏳</span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-700">Esperando votación</h3>
+                <p className="text-slate-400 text-sm mt-2">La administración activará una pregunta pronto.</p>
             </div>
         )
     }
 
     return (
-        <div className="p-8 bg-white border-2 border-blue-500 rounded-xl shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
-                <span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>
-                <h2 className="text-red-600 font-bold uppercase text-sm tracking-widest">Votación en Curso</h2>
+        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100">
+            <div className="flex items-center gap-2 mb-6">
+                <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                </span>
+                <span className="text-red-600 font-bold text-xs uppercase tracking-widest">En vivo ahora</span>
             </div>
 
-            <h3 className="text-2xl font-bold text-gray-900 mb-8">{preguntaActiva.titulo}</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-8 leading-tight">{preguntaActiva.titulo}</h3>
 
             {yaVote ? (
-                <div className="p-6 bg-green-50 text-green-700 border border-green-200 rounded-lg text-center">
-                    <svg className="w-12 h-12 mx-auto mb-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <p className="text-xl font-bold">¡Tu voto ha sido registrado!</p>
-                    <p className="text-sm mt-2 opacity-80">Espera a que el administrador cierre la votación.</p>
+                <div className="bg-emerald-50 border-2 border-emerald-200 p-6 rounded-2xl text-center">
+                    <span className="text-4xl mb-2 block">✅</span>
+                    <p className="text-emerald-800 font-bold text-lg">¡Voto registrado!</p>
+                    <p className="text-emerald-600 text-sm">Gracias por participar.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button disabled={enviando} onClick={() => emitirVoto('Si')} className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl transition-transform hover:scale-105 shadow-md disabled:opacity-50">
-                        SÍ
+                <div className="flex flex-col gap-3">
+                    <button onClick={() => emitirVoto('Si')} className={`${botonBase} bg-emerald-500 border-emerald-700 text-white hover:bg-emerald-600`}>
+                        SÍ APRUEBO
                     </button>
-                    <button disabled={enviando} onClick={() => emitirVoto('No')} className="bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl text-xl transition-transform hover:scale-105 shadow-md disabled:opacity-50">
-                        NO
+                    <button onClick={() => emitirVoto('No')} className={`${botonBase} bg-red-500 border-red-700 text-white hover:bg-red-600`}>
+                        NO APRUEBO
                     </button>
-                    <button disabled={enviando} onClick={() => emitirVoto('Abstencion')} className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 rounded-xl text-xl transition-transform hover:scale-105 shadow-md disabled:opacity-50">
+                    <button onClick={() => emitirVoto('Abstencion')} className={`${botonBase} bg-slate-500 border-slate-700 text-white hover:bg-slate-600`}>
                         ABSTENCIÓN
                     </button>
                 </div>

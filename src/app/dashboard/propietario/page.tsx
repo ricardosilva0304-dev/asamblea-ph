@@ -1,19 +1,16 @@
 import PreguntaEnVivo from '@/components/PreguntaEnVivo'
-import BannerMensaje from '@/components/BannerMensaje' // IMPORTAR ESTO
+import BannerMensaje from '@/components/BannerMensaje'
 
 export default function PropietarioDashboard() {
     return (
-        <div className="max-w-3xl mx-auto p-6 mt-10">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Panel del Propietario</h1>
-                <p className="text-gray-600 mt-2">
-                    Bienvenido a la asamblea. Por favor, mantén esta pantalla abierta.
-                    Las votaciones aparecerán aquí automáticamente.
-                </p>
+        <div className="max-w-lg mx-auto py-4 px-2">
+            {/* Encabezado muy sencillo */}
+            <div className="text-center mb-6">
+                <h1 className="text-2xl font-extrabold text-slate-800">Sala de Votación</h1>
+                <p className="text-slate-500 text-sm">Edificio y Asamblea PH</p>
             </div>
 
-            <BannerMensaje /> {/* AÑADIR AQUÍ */}
-
+            <BannerMensaje />
             <PreguntaEnVivo />
         </div>
     )

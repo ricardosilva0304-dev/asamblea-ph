@@ -1,17 +1,14 @@
 import Navbar from '@/components/Navbar'
+import ProtectorCierre from '@/components/ProtectorCierre' // Importar el protector
 
-export default function DashboardLayout({
-    children,
-}: {
-    children: React.ReactNode
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="min-h-screen bg-gray-50 font-sans">
-            {/* El Navbar aparecerá arriba en todas las páginas del dashboard */}
-            <Navbar />
+        <div className="min-h-screen bg-slate-50">
+            {/* Añadimos el protector aquí */}
+            <ProtectorCierre />
 
-            {/* Aquí abajo se renderizará el panel del admin, programador o propietario */}
-            <main className="pb-12">
+            <Navbar />
+            <main className="max-w-6xl mx-auto px-4 py-6 md:py-10">
                 {children}
             </main>
         </div>

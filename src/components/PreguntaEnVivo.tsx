@@ -91,36 +91,37 @@ export default function PreguntaEnVivo() {
     }
 
     return (
-        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100">
-            <div className="flex items-center gap-2 mb-6">
-                <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
-                </span>
-                <span className="text-red-600 font-bold text-xs uppercase tracking-widest">En vivo ahora</span>
+        <div className="bg-white p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 relative overflow-hidden">
+            {/* Fondo decorativo sutil */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-[4rem] -z-0"></div>
+
+            <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-6">
+                    <span className="flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-indigo-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                    </span>
+                    <span className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.2em]">Votación Activa</span>
+                </div>
+
+                <h3 className="text-2xl font-black text-slate-900 mb-8 leading-snug">{preguntaActiva.titulo}</h3>
+
+                {yaVote ? (
+                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 p-8 rounded-3xl text-center">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                            <span className="text-3xl">🗳️</span>
+                        </div>
+                        <p className="text-emerald-900 font-black text-xl">¡Voto enviado!</p>
+                        <p className="text-emerald-700/70 font-medium mt-1">Gracias por participar.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                        <button onClick={() => emitirVoto('Si')} className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg">SÍ APRUEBO</button>
+                        <button onClick={() => emitirVoto('No')} className="w-full bg-white text-slate-800 font-black py-5 rounded-2xl border-2 border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all text-lg">NO APRUEBO</button>
+                        <button onClick={() => emitirVoto('Abstencion')} className="w-full text-slate-400 font-bold py-3 rounded-2xl hover:bg-slate-50 transition-all">Abstención</button>
+                    </div>
+                )}
             </div>
-
-            <h3 className="text-2xl font-bold text-slate-900 mb-8 leading-tight">{preguntaActiva.titulo}</h3>
-
-            {yaVote ? (
-                <div className="bg-emerald-50 border-2 border-emerald-200 p-6 rounded-2xl text-center">
-                    <span className="text-4xl mb-2 block">✅</span>
-                    <p className="text-emerald-800 font-bold text-lg">¡Voto registrado!</p>
-                    <p className="text-emerald-600 text-sm">Gracias por participar.</p>
-                </div>
-            ) : (
-                <div className="flex flex-col gap-3">
-                    <button onClick={() => emitirVoto('Si')} className={`${botonBase} bg-emerald-500 border-emerald-700 text-white hover:bg-emerald-600`}>
-                        SÍ APRUEBO
-                    </button>
-                    <button onClick={() => emitirVoto('No')} className={`${botonBase} bg-red-500 border-red-700 text-white hover:bg-red-600`}>
-                        NO APRUEBO
-                    </button>
-                    <button onClick={() => emitirVoto('Abstencion')} className={`${botonBase} bg-slate-500 border-slate-700 text-white hover:bg-slate-600`}>
-                        ABSTENCIÓN
-                    </button>
-                </div>
-            )}
         </div>
     )
 }

@@ -31,7 +31,7 @@ export default async function LoginPage({
             */}
             <div className="h-24 w-auto mb-6 flex items-center justify-center">
               <img
-                src="/tu-logo.png"
+                src="/logo.png"
                 alt="Logo Asamblea PH"
                 className="max-h-full object-contain drop-shadow-sm"
               />
@@ -53,7 +53,7 @@ export default async function LoginPage({
                   type="text"
                   required
                   className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-lg"
-                  placeholder="Ej: Apto 101"
+                  placeholder=""
                 />
               </div>
             </div>
@@ -69,7 +69,7 @@ export default async function LoginPage({
                   type="password"
                   required
                   className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-lg"
-                  placeholder="••••••••"
+                  placeholder=""
                 />
               </div>
             </div>

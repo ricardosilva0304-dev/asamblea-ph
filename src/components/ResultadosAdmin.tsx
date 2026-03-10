@@ -8,7 +8,6 @@ import TablaDetalleVotos from './TablaDetalleVotos'
 type Pregunta = { id: string; titulo: string; descripcion: string; estado: string; opciones: string[] }
 type Voto = { pregunta_id: string; opcion: string; coeficiente: number }
 
-// Interfaz para tipar los resultados calculados
 interface Resultado {
     name: string
     value: number
@@ -22,15 +21,17 @@ export default function ResultadosAdmin() {
     const [votos, setVotos] = useState<Voto[]>([])
     const supabase = createClient()
 
+    const cargarDatos = async () => {
+        const { data: qData } = await supabase.from('preguntas').select('*').order('creada_en', { ascending: false })
+        const { data: vData } = await supabase.from('votos').select('pregunta_id, opcion, coeficiente')
+        if (qData) setPreguntas(qData)
+        if (vData) setVotos(vData)
+    }
+
     useEffect(() => {
-        const cargarDatos = async () => {
-            const { data: qData } = await supabase.from('preguntas').select('*').order('creada_en', { ascending: false })
-            const { data: vData } = await supabase.from('votos').select('pregunta_id, opcion, coeficiente')
-            if (qData) setPreguntas(qData)
-            if (vData) setVotos(vData)
-        }
         cargarDatos()
 
+        // Canal para escuchar AMBAS tablas
         const canal = supabase.channel('admin-realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'votos' }, cargarDatos)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'preguntas' }, cargarDatos)
@@ -44,7 +45,6 @@ export default function ResultadosAdmin() {
             {preguntas.map((pregunta) => {
                 const votosPreg = votos.filter(v => v.pregunta_id === pregunta.id)
 
-                // Tipamos el array de resultados
                 const resultados: Resultado[] = pregunta.opciones.map((opc: string, i: number) => ({
                     name: opc,
                     value: votosPreg.filter(v => v.opcion === opc).reduce((s, v) => s + Number(v.coeficiente), 0),

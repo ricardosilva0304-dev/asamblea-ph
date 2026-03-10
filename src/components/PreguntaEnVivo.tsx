@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 
-// 1. Agregamos 'opciones' al tipo
 type Pregunta = { id: string; titulo: string; estado: string; opciones: string[] }
 type Perfil = { id: string; coeficiente: number }
 
@@ -11,8 +10,6 @@ export default function PreguntaEnVivo() {
     const [preguntaActiva, setPreguntaActiva] = useState<Pregunta | null>(null)
     const [perfil, setPerfil] = useState<Perfil | null>(null)
     const [yaVote, setYaVote] = useState(false)
-    const [enviando, setEnviando] = useState(false)
-
     const supabase = createClient()
 
     useEffect(() => {
@@ -23,38 +20,32 @@ export default function PreguntaEnVivo() {
             const { data: perfilData } = await supabase.from('perfiles').select('id, coeficiente').eq('id', user.id).single()
             if (perfilData) setPerfil(perfilData)
 
-            // 2. Traemos las opciones de la tabla
             const { data: pregunta } = await supabase.from('preguntas').select('*').eq('estado', 'activa').single()
 
             if (pregunta) {
                 setPreguntaActiva(pregunta)
-                const { count } = await supabase.from('votos').select('*', { count: 'exact' })
+                // Verificamos si ya votó en esta pregunta específica
+                const { count } = await supabase.from('votos').select('*', { count: 'exact', head: true })
                     .eq('pregunta_id', pregunta.id).eq('usuario_id', user.id)
-                if (count && count > 0) setYaVote(true)
+                setYaVote((count || 0) > 0)
+            } else {
+                setPreguntaActiva(null)
             }
         }
 
         cargarDatos()
 
+        // 2. CORRECCIÓN DEL CANAL: Ahora sí escucha cambios y actualiza el estado
         const canal = supabase.channel('preguntas-propietario')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'preguntas' }, (payload) => {
-                const nuevaPregunta = payload.new as Pregunta
-                if (nuevaPregunta?.estado === 'activa') {
-                    setPreguntaActiva(nuevaPregunta)
-                    setYaVote(false)
-                } else {
-                    setPreguntaActiva(null)
-                    setYaVote(false)
-                }
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'preguntas' }, () => {
+                cargarDatos() // Recargamos todo al haber cualquier cambio
             }).subscribe()
 
         return () => { supabase.removeChannel(canal) }
     }, [supabase])
 
-    // 3. Función dinámica
     const emitirVoto = async (opcion: string) => {
         if (!preguntaActiva || !perfil || yaVote) return
-        setEnviando(true)
 
         const { error } = await supabase.from('votos').insert({
             pregunta_id: preguntaActiva.id,
@@ -66,27 +57,31 @@ export default function PreguntaEnVivo() {
         if (!error) {
             setYaVote(true)
         } else {
-            alert("Error al votar.")
+            alert("Error al registrar el voto.")
         }
-        setEnviando(false)
     }
 
-    if (!preguntaActiva) return <div>Esperando votación...</div>
+    if (!preguntaActiva) return (
+        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center">
+            <h3 className="text-xl font-bold text-slate-400">Esperando votación...</h3>
+        </div>
+    )
 
     return (
         <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
             <h3 className="text-2xl font-black text-slate-900 mb-8">{preguntaActiva.titulo}</h3>
 
             {yaVote ? (
-                <div className="text-center p-8 bg-emerald-50 rounded-3xl">¡Voto enviado!</div>
+                <div className="text-center p-8 bg-emerald-50 rounded-3xl text-emerald-800 font-bold">
+                    ¡Voto registrado correctamente!
+                </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4">
-                    {/* 4. Mapeamos las opciones dinámicamente */}
                     {preguntaActiva.opciones.map((opcion: string) => (
                         <button
                             key={opcion}
                             onClick={() => emitirVoto(opcion)}
-                            className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition"
+                            className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition active:scale-95"
                         >
                             {opcion}
                         </button>

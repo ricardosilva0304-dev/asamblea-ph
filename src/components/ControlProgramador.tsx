@@ -8,8 +8,7 @@ import {
     Trash2,
     Upload,
     AlertCircle,
-    CheckCircle2,
-    X
+    CheckCircle2
 } from 'lucide-react'
 
 export default function ControlProgramador() {
@@ -32,7 +31,15 @@ export default function ControlProgramador() {
     }
 
     const lanzarVotacion = async () => {
+        // 1. Procesar y limpiar opciones
+        const opcionesArray = opciones.split(',').map(o => o.trim()).filter(o => o !== '')
+
         if (!titulo.trim()) return mostrarNotificacion('error', 'El título es obligatorio')
+        if (opcionesArray.length === 0) return mostrarNotificacion('error', 'Debe haber al menos una opción')
+
+        // Log para depurar en consola (F12)
+        console.log("Insertando opciones:", opcionesArray)
+
         setCargando(true)
         try {
             let imagen_url = null
@@ -44,15 +51,23 @@ export default function ControlProgramador() {
                     imagen_url = data.publicUrl
                 }
             }
+
             await supabase.from('preguntas').update({ estado: 'cerrada' }).eq('estado', 'activa')
+
             const { error } = await supabase.from('preguntas').insert({
-                titulo, descripcion: desc, opciones: opciones.split(',').map(o => o.trim()),
-                imagen_url, estado: 'activa'
+                titulo,
+                descripcion: desc,
+                opciones: opcionesArray, // Ahora usamos el array limpio
+                imagen_url,
+                estado: 'activa'
             })
+
             if (error) throw error
+
             mostrarNotificacion('success', 'Encuesta publicada')
             setTitulo(''); setDesc(''); setArchivo(null)
         } catch (e) {
+            console.error(e) // Ver el error real en consola
             mostrarNotificacion('error', 'Error al publicar')
         } finally {
             setCargando(false)
@@ -76,7 +91,6 @@ export default function ControlProgramador() {
         setCargando(false)
     }
 
-    // Estilos comunes para los inputs
     const inputClass = "w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-indigo-500 transition"
 
     return (

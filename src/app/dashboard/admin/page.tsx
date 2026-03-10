@@ -1,21 +1,22 @@
 import ResultadosAdmin from '@/components/ResultadosAdmin'
 import BannerMensaje from '@/components/BannerMensaje'
-import FormCrearUsuario from '@/components/FormCrearUsuario' // NUEVO IMPORT
+import FormCrearUsuario from '@/components/FormCrearUsuario'
 
 export default function AdminDashboard() {
   return (
-    <div className="max-w-5xl mx-auto p-6 mt-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-blue-800">Mesa de Control - Administrador</h1>
-        <p className="text-gray-600">Visualización de resultados de la asamblea en tiempo real.</p>
-      </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
 
-      <BannerMensaje />
-      <ResultadosAdmin />
+        <header>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Mesa de Control</h1>
+          <p className="text-slate-500 mt-1">Monitoreo de votaciones y gestión de usuarios en tiempo real.</p>
+        </header>
 
-      {/* AÑADIMOS EL FORMULARIO AQUÍ ABAJO */}
-      <FormCrearUsuario />
+        <BannerMensaje />
+        <ResultadosAdmin />
+        <FormCrearUsuario />
 
+      </main>
     </div>
   )
 }

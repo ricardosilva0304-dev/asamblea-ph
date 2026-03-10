@@ -3,12 +3,24 @@
 import { useState, useEffect } from 'react'
 
 export default function Reloj() {
-  const [fecha, setFecha] = useState(new Date())
+  // Inicializamos en null para que el servidor y el cliente tengan el mismo valor inicial
+  const [fecha, setFecha] = useState<Date | null>(null)
 
   useEffect(() => {
-    const timer = setInterval(() => setFecha(new Date()), 1000)
+    // Esto solo corre en el cliente
+    setFecha(new Date())
+
+    const timer = setInterval(() => {
+      setFecha(new Date())
+    }, 1000)
+
     return () => clearInterval(timer)
   }, [])
+
+  // Mientras no haya fecha (durante la carga inicial), mostramos algo vacío o un placeholder
+  if (!fecha) {
+    return <div className="h-10"></div> // O un esqueleto de carga
+  }
 
   return (
     <div className="flex flex-col items-end text-slate-400">

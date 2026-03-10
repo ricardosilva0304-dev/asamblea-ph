@@ -28,60 +28,40 @@ export default function FormCrearUsuario() {
         setCargando(false)
     }
 
+    const inputClass = "w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 outline-none focus:border-slate-400 transition"
+    const labelClass = "block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1"
+
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mt-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                👤 Agregar Nuevo Propietario
-            </h2>
+        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">Agregar Propietario</h2>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Usuario / Unidad</label>
-                    <input
-                        name="usuario" type="text" required placeholder="Ej: apto101"
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                    <label className={labelClass}>Usuario / Unidad</label>
+                    <input name="usuario" type="text" required placeholder="Ej: apto101" className={inputClass} />
                 </div>
-
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                    <input
-                        name="nombre" type="text" required placeholder="Ej: Juan Pérez"
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                    <label className={labelClass}>Nombre Completo</label>
+                    <input name="nombre" type="text" required placeholder="Ej: Juan Pérez" className={inputClass} />
                 </div>
-
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Coeficiente (%)</label>
-                    <input
-                        name="coeficiente" type="number" step="0.0001" min="0" required placeholder="Ej: 2.54"
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                    <label className={labelClass}>Coeficiente (%)</label>
+                    <input name="coeficiente" type="number" step="0.0001" required className={inputClass} />
                 </div>
-
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                    <input
-                        name="password" type="password" required placeholder="Mínimo 6 caracteres" minLength={6}
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                    <label className={labelClass}>Contraseña</label>
+                    <input name="password" type="password" required className={inputClass} />
                 </div>
 
                 {mensaje && (
-                    <div className={`md:col-span-2 p-3 rounded-lg text-sm font-medium ${mensaje.tipo === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                    <div className={`md:col-span-2 p-4 rounded-lg text-sm font-medium ${mensaje.tipo === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
                         {mensaje.texto}
                     </div>
                 )}
 
-                <div className="md:col-span-2 mt-2">
-                    <button
-                        type="submit" disabled={cargando}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50"
-                    >
-                        {cargando ? 'Creando...' : 'Crear Propietario'}
-                    </button>
-                </div>
+                <button type="submit" disabled={cargando} className="md:col-span-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition">
+                    {cargando ? 'Procesando...' : 'Guardar Nuevo Propietario'}
+                </button>
             </form>
         </div>
     )

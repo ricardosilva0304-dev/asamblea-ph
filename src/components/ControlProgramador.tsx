@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import {
     Rocket,
@@ -11,7 +11,7 @@ import {
     CheckCircle2
 } from 'lucide-react'
 
-export default function ControlProgramador() {
+export default function ControlProgramador({ encuestaAEditar, limpiarEdicion }: any) {
     const [titulo, setTitulo] = useState('')
     const [desc, setDesc] = useState('')
     const [opciones, setOpciones] = useState('Si, No, Abstencion')
@@ -30,19 +30,29 @@ export default function ControlProgramador() {
         setTimeout(() => setNotificacion(null), 3500)
     }
 
+    // Efecto para rellenar el formulario al editar
+    useEffect(() => {
+        if (encuestaAEditar) {
+            setTitulo(encuestaAEditar.titulo)
+            setDesc(encuestaAEditar.descripcion)
+            setOpciones(encuestaAEditar.opciones.join(', '))
+        } else {
+            setTitulo('')
+            setDesc('')
+            setOpciones('Si, No, Abstencion')
+        }
+    }, [encuestaAEditar])
+
     const lanzarVotacion = async () => {
-        // 1. Procesar y limpiar opciones
         const opcionesArray = opciones.split(',').map(o => o.trim()).filter(o => o !== '')
 
         if (!titulo.trim()) return mostrarNotificacion('error', 'El título es obligatorio')
         if (opcionesArray.length === 0) return mostrarNotificacion('error', 'Debe haber al menos una opción')
 
-        // Log para depurar en consola (F12)
-        console.log("Insertando opciones:", opcionesArray)
-
         setCargando(true)
         try {
-            let imagen_url = null
+            let imagen_url = encuestaAEditar?.imagen_url || null // Mantener la anterior si existe
+
             if (archivo) {
                 const fileName = `${Date.now()}-${archivo.name}`
                 const { data: uploadData } = await supabase.storage.from('encuestas').upload(fileName, archivo)
@@ -52,23 +62,25 @@ export default function ControlProgramador() {
                 }
             }
 
-            await supabase.from('preguntas').update({ estado: 'cerrada' }).eq('estado', 'activa')
+            if (encuestaAEditar) {
+                // UPDATE
+                await supabase.from('preguntas').update({
+                    titulo, descripcion: desc, opciones: opcionesArray, imagen_url
+                }).eq('id', encuestaAEditar.id)
+                mostrarNotificacion('success', 'Encuesta actualizada')
+                limpiarEdicion()
+            } else {
+                // INSERT
+                await supabase.from('preguntas').update({ estado: 'cerrada' }).eq('estado', 'activa')
+                await supabase.from('preguntas').insert({
+                    titulo, descripcion: desc, opciones: opcionesArray, imagen_url, estado: 'activa'
+                })
+                mostrarNotificacion('success', 'Encuesta lanzada')
+            }
 
-            const { error } = await supabase.from('preguntas').insert({
-                titulo,
-                descripcion: desc,
-                opciones: opcionesArray, // Ahora usamos el array limpio
-                imagen_url,
-                estado: 'activa'
-            })
-
-            if (error) throw error
-
-            mostrarNotificacion('success', 'Encuesta publicada')
             setTitulo(''); setDesc(''); setArchivo(null)
         } catch (e) {
-            console.error(e) // Ver el error real en consola
-            mostrarNotificacion('error', 'Error al publicar')
+            mostrarNotificacion('error', 'Error al procesar')
         } finally {
             setCargando(false)
         }
@@ -95,7 +107,6 @@ export default function ControlProgramador() {
 
     return (
         <div className="space-y-8">
-            {/* NOTIFICACION */}
             {notificacion && (
                 <div className={`fixed top-8 right-8 px-6 py-4 rounded-xl shadow-lg border flex items-center gap-3 z-50 text-sm font-medium
                     ${notificacion.tipo === 'success' ? 'bg-white border-emerald-200 text-emerald-700' : 'bg-white border-rose-200 text-rose-700'}`}>
@@ -107,14 +118,16 @@ export default function ControlProgramador() {
             <div className="grid lg:grid-cols-2 gap-8">
                 {/* ENCUESTA */}
                 <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="p-3 rounded-xl bg-slate-900 text-white">
-                            <Rocket size={24} />
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-xl bg-slate-900 text-white">
+                                <Rocket size={24} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900">{encuestaAEditar ? 'Editar Encuesta' : 'Crear Encuesta'}</h2>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-900">Crear Encuesta</h2>
-                            <p className="text-slate-500 text-sm">Control de votaciones en vivo</p>
-                        </div>
+                        {encuestaAEditar && <button onClick={limpiarEdicion} className="text-xs font-bold text-slate-400 hover:text-slate-900 uppercase">Cancelar</button>}
                     </div>
 
                     <div className="space-y-4">
@@ -124,44 +137,28 @@ export default function ControlProgramador() {
 
                         <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-slate-50 transition">
                             <Upload size={18} className="text-slate-400" />
-                            <span className="text-sm text-slate-500 truncate">{archivo ? archivo.name : 'Subir imagen'}</span>
+                            <span className="text-sm text-slate-500 truncate">{archivo ? archivo.name : 'Subir nueva imagen'}</span>
                             <input type="file" className="hidden" onChange={e => setArchivo(e.target.files?.[0] || null)} />
                         </label>
 
                         <div className="flex gap-4 pt-4">
                             <button onClick={lanzarVotacion} className="flex-1 py-3 px-4 rounded-lg font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm">
-                                {cargando ? 'Publicando...' : 'Lanzar Encuesta'}
-                            </button>
-                            <button onClick={cerrarVotacion} className="px-6 py-3 rounded-lg font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
-                                Cerrar
+                                {cargando ? 'Procesando...' : (encuestaAEditar ? 'Guardar Cambios' : 'Lanzar Encuesta')}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* MENSAJE */}
+                {/* MENSAJE (se mantiene igual) */}
                 <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                     <div className="flex items-center gap-4 mb-8">
-                        <div className="p-3 rounded-xl bg-amber-500 text-white">
-                            <Megaphone size={24} />
-                        </div>
+                        <div className="p-3 rounded-xl bg-amber-500 text-white"><Megaphone size={24} /></div>
                         <div>
                             <h2 className="text-xl font-bold text-slate-900">Anuncio Global</h2>
-                            <p className="text-slate-500 text-sm">Mensaje visible para todos</p>
                         </div>
                     </div>
-
                     <textarea value={textoMensaje} onChange={e => setTextoMensaje(e.target.value)} placeholder="Escribe el mensaje..." className={`${inputClass} h-52 mb-6`} />
-
-                    <div className="flex gap-4">
-                        <button onClick={publicarMensaje} className="flex-1 py-3 px-4 rounded-lg font-semibold bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm">
-                            Publicar
-                        </button>
-                        <button onClick={() => supabase.from('mensajes').update({ estado: 'inactivo' }).eq('estado', 'activo')}
-                            className="px-6 py-3 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition flex items-center justify-center">
-                            <Trash2 size={20} />
-                        </button>
-                    </div>
+                    <button onClick={publicarMensaje} className="w-full py-3 rounded-lg font-semibold bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm">Publicar</button>
                 </div>
             </div>
         </div>

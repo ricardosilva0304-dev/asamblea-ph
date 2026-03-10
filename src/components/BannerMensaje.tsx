@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { Bell, Megaphone } from 'lucide-react'
 
 type Mensaje = { texto: string; estado: string }
 
@@ -10,7 +11,6 @@ export default function BannerMensaje() {
     const supabase = createClient()
 
     useEffect(() => {
-        // 1. Buscar si ya hay un mensaje activo al cargar
         const cargarMensaje = async () => {
             const { data } = await supabase
                 .from('mensajes')
@@ -24,15 +24,13 @@ export default function BannerMensaje() {
         }
         cargarMensaje()
 
-        // 2. Escuchar cambios en los mensajes
         const canal = supabase.channel('mensajes-en-vivo')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'mensajes' }, (payload) => {
                 const nuevoMensaje = payload.new as Mensaje
-
                 if (nuevoMensaje.estado === 'activo') {
                     setMensajeActivo(nuevoMensaje.texto)
                 } else {
-                    setMensajeActivo(null) // Se oculta si el estado pasa a 'inactivo'
+                    setMensajeActivo(null)
                 }
             }).subscribe()
 
@@ -42,15 +40,33 @@ export default function BannerMensaje() {
     if (!mensajeActivo) return null
 
     return (
-        <div className="bg-white border-l-4 border-slate-900 p-6 rounded-xl shadow-sm flex items-center gap-4">
-            <div className="bg-slate-100 p-2 rounded-lg text-slate-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+        <div className="relative overflow-hidden bg-white rounded-2xl border border-indigo-100 shadow-[0_4px_20px_-4px_rgba(79,70,229,0.1)] p-1 animate-in slide-in-from-top-4 duration-500">
+            {/* Franja decorativa lateral */}
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 rounded-l-2xl"></div>
+
+            <div className="flex items-center gap-4 px-6 py-4">
+                {/* Icono con fondo llamativo */}
+                <div className="flex-shrink-0 bg-indigo-50 p-3 rounded-xl text-indigo-600">
+                    <Megaphone size={22} strokeWidth={2.5} />
+                </div>
+
+                {/* Contenido */}
+                <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 mb-0.5">
+                        Aviso Importante
+                    </span>
+                    <p className="text-slate-800 font-semibold leading-snug">
+                        {mensajeActivo}
+                    </p>
+                </div>
             </div>
-            <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Anuncio Activo</p>
-                <p className="text-slate-800 font-medium text-lg">{mensajeActivo}</p>
+
+            {/* Pequeño detalle de pulso para indicar actividad */}
+            <div className="absolute right-4 top-4">
+                <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
             </div>
         </div>
     )

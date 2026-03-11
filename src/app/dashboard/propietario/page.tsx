@@ -1,10 +1,11 @@
 import PreguntaEnVivo from '@/components/PreguntaEnVivo'
 import BannerMensaje from '@/components/BannerMensaje'
+import EstadoCuentaPropietario from '@/components/EstadoCuentaPropietario'
 
 export default function PropietarioDashboard() {
-    return (
-        <>
-            <style>{`
+  return (
+    <>
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
         .prop-root {
@@ -155,39 +156,43 @@ export default function PropietarioDashboard() {
         }
       `}</style>
 
-            <div className="prop-root">
-                {/* TOP BAR */}
-                <header className="prop-topbar">
-                    <div className="prop-topbar-inner">
-                        <div className="prop-topbar-brand">
-                            <div className="prop-topbar-dot" />
-                            <span className="prop-topbar-name">Asamblea PH</span>
-                        </div>
-                        <span className="prop-topbar-role">Propietario</span>
-                    </div>
-                </header>
-
-                {/* CONTENT */}
-                <main className="prop-main">
-                    {/* Hero */}
-                    <div className="prop-hero">
-                        <div className="prop-hero-icon">🏛️</div>
-                        <div>
-                            <div className="prop-hero-title">Sala de Asamblea</div>
-                            <div className="prop-hero-sub">Votaciones en tiempo real</div>
-                        </div>
-                    </div>
-
-                    {/* Banner mensaje */}
-                    <BannerMensaje />
-
-                    {/* Votación */}
-                    <div className="prop-section-label">🗳️ Votación activa</div>
-                    <PreguntaEnVivo />
-                </main>
-
-                <div className="prop-footer">Asamblea PH © 2026 · Parque de las Flores</div>
+      <div className="prop-root">
+        {/* TOP BAR */}
+        <header className="prop-topbar">
+          <div className="prop-topbar-inner">
+            <div className="prop-topbar-brand">
+              <div className="prop-topbar-dot" />
+              <span className="prop-topbar-name">Asamblea PH</span>
             </div>
-        </>
-    )
+            <span className="prop-topbar-role">Propietario</span>
+          </div>
+        </header>
+
+        {/* CONTENT */}
+        <main className="prop-main">
+          {/* Hero */}
+          <div className="prop-hero">
+            <div className="prop-hero-icon">🏛️</div>
+            <div>
+              <div className="prop-hero-title">Sala de Asamblea</div>
+              <div className="prop-hero-sub">Votaciones en tiempo real</div>
+            </div>
+          </div>
+
+          {/* Banner mensaje */}
+          <BannerMensaje />
+
+          {/* Votación */}
+          <div className="prop-section-label">🗳️ Votación activa</div>
+          <PreguntaEnVivo />
+
+          {/* Estado de cuenta */}
+          <div className="prop-section-label">📄 Estado de cuenta</div>
+          <EstadoCuentaPropietario />
+        </main>
+
+        <div className="prop-footer">Asamblea PH © 2026 · Parque de las Flores</div>
+      </div>
+    </>
+  )
 }

@@ -48,8 +48,17 @@ export default function EstadosCuenta() {
     }, [])
 
     const cargarPropietarios = async () => {
-        const { data } = await supabase.from('propietarios').select('*').order('apartamento')
-        if (data) setPropietarios(data)
+        const { data } = await supabase
+            .from('perfiles')
+            .select('id, nombre, usuario')
+            .eq('rol', 'propietario')
+            .order('nombre')
+        if (data) setPropietarios(data.map(p => ({
+            id: p.id,
+            nombre: p.nombre,
+            apartamento: p.usuario,
+            email: undefined
+        })))
     }
 
     const cargarEstados = async () => {

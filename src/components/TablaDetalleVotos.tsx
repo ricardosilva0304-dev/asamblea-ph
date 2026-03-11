@@ -3,36 +3,38 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { utils, writeFile } from 'xlsx'
-import { Download, UserX, CheckCircle2 } from 'lucide-react'
+import { Download, UserX, CheckCircle2, Loader2 } from 'lucide-react'
 
-type VotoDetallado = {
-    usuario: string
-    nombre: string
-    opcion: string
-    coeficiente: number
+type VotoDetallado = { usuario: string; nombre: string; opcion: string; coeficiente: number }
+type Usuario = { id: string; usuario: string; nombre: string; coeficiente: number }
+
+const COLORES_OPCION: Record<string, string> = {
+    'Apruebo': '#dcfce7|#15803d',
+    'No Apruebo': '#fee2e2|#dc2626',
+    'Abstención': '#f1f5f9|#64748b',
 }
 
-type Usuario = {
-    id: string
-    usuario: string
-    nombre: string
-    coeficiente: number
+function chipStyle(opcion: string) {
+    const entry = COLORES_OPCION[opcion]
+    if (entry) {
+        const [bg, color] = entry.split('|')
+        return { background: bg, color }
+    }
+    return { background: '#eff6ff', color: '#1d4ed8' }
 }
 
 export default function TablaDetalleVotos({ preguntaId }: { preguntaId: string }) {
     const [votos, setVotos] = useState<VotoDetallado[]>([])
     const [pendientes, setPendientes] = useState<Usuario[]>([])
+    const [cargando, setCargando] = useState(true)
     const supabase = createClient()
 
-    // Usamos useCallback para poder llamar a esta función desde el useEffect y desde el Realtime
     const cargarDatos = useCallback(async () => {
-        // 1. Cargar Votos
         const { data: dataVotos } = await supabase
             .from('votos')
             .select(`opcion, coeficiente, perfiles (usuario, nombre)`)
             .eq('pregunta_id', preguntaId)
 
-        // 2. Cargar Todos los Usuarios (Propietarios)
         const { data: dataUsuarios } = await supabase
             .from('perfiles')
             .select('id, usuario, nombre, coeficiente')
@@ -45,119 +47,274 @@ export default function TablaDetalleVotos({ preguntaId }: { preguntaId: string }
                 opcion: v.opcion,
                 coeficiente: v.coeficiente
             }))
-
-            // Calculamos quiénes faltan por votar comparando las listas
-            const usuariosQueYaVotaron = dataVotos.map((v: any) => v.perfiles?.usuario)
-            const pendientesFiltrados = dataUsuarios.filter(u => !usuariosQueYaVotaron.includes(u.usuario))
-
+            const yaVotaron = dataVotos.map((v: any) => v.perfiles?.usuario)
+            const sinVotar = dataUsuarios.filter(u => !yaVotaron.includes(u.usuario))
             setVotos(votosFormateados)
-            setPendientes(pendientesFiltrados)
+            setPendientes(sinVotar)
         }
+        setCargando(false)
     }, [preguntaId, supabase])
 
     useEffect(() => {
         cargarDatos()
-
-        // === TIEMPO REAL PARA VOTOS ===
-        // Escuchamos cualquier INSERT en la tabla de votos para esta pregunta específica
         const canal = supabase.channel(`votos-detalle-${preguntaId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'votos',
-                    filter: `pregunta_id=eq.${preguntaId}`
-                },
-                () => {
-                    console.log("Nuevo voto detectado, actualizando listas...")
-                    cargarDatos() // Recargamos las listas automáticamente
-                }
-            )
+            .on('postgres_changes', {
+                event: 'INSERT', schema: 'public', table: 'votos',
+                filter: `pregunta_id=eq.${preguntaId}`
+            }, cargarDatos)
             .subscribe()
-
-        return () => {
-            supabase.removeChannel(canal)
-        }
+        return () => { supabase.removeChannel(canal) }
     }, [preguntaId, cargarDatos, supabase])
 
     const exportarExcel = () => {
         if (votos.length === 0) return
         const ws = utils.json_to_sheet(votos)
         const wb = utils.book_new()
-        utils.book_append_sheet(wb, ws, "Resultados")
-        writeFile(wb, `Votos_Pregunta_${preguntaId.slice(0, 8)}.xlsx`)
+        utils.book_append_sheet(wb, ws, 'Resultados')
+        writeFile(wb, `Votos_${preguntaId.slice(0, 8)}.xlsx`)
     }
 
-    return (
-        <div className="space-y-6">
-            {/* TABLA DE VOTANTES */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <CheckCircle2 size={18} className="text-emerald-500" />
-                        Votantes registrados ({votos.length})
-                    </h3>
-                    <button onClick={exportarExcel} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-sm">
-                        <Download size={14} /> Exportar
-                    </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-widest font-black">
-                            <tr>
-                                <th className="px-6 py-4 text-left">Unidad</th>
-                                <th className="px-6 py-4 text-left">Nombre</th>
-                                <th className="px-6 py-4 text-center">Voto</th>
-                                <th className="px-6 py-4 text-right">Coef.</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {votos.map((v, i) => (
-                                <tr key={i} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 font-bold text-slate-900">{v.usuario}</td>
-                                    <td className="px-6 py-4 text-slate-600">{v.nombre}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-tighter">
-                                            {v.opcion}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">{v.coeficiente.toFixed(2)}%</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                {votos.length === 0 && (
-                    <div className="p-8 text-center text-slate-400 text-sm italic">
-                        Esperando el primer voto...
-                    </div>
-                )}
-            </div>
-
-            {/* TABLA DE PENDIENTES */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-5 border-b border-slate-100 bg-white">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <UserX size={18} className="text-rose-500" />
-                        Pendientes de votar ({pendientes.length})
-                    </h3>
-                </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {pendientes.map((p) => (
-                        <div key={p.id} className="flex flex-col p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                            <span className="text-xs font-black text-slate-900">{p.usuario}</span>
-                            <span className="text-[10px] text-slate-500 truncate">{p.nombre}</span>
-                        </div>
-                    ))}
-                </div>
-                {pendientes.length === 0 && (
-                    <div className="p-6 text-center text-emerald-600 text-sm font-bold">
-                        ¡Todos los propietarios han votado!
-                    </div>
-                )}
-            </div>
+    if (cargando) return (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: '#94a3b8' }}>
+            <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
         </div>
+    )
+
+    return (
+        <>
+            <style>{`
+        .tdv-wrap { display: flex; flex-direction: column; gap: 1rem; }
+
+        /* ── Panel ── */
+        .tdv-panel {
+          border: 1px solid #e8ecf2;
+          border-radius: 1rem;
+          overflow: hidden;
+          background: white;
+        }
+
+        .tdv-panel-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.9rem 1.1rem;
+          border-bottom: 1px solid #f1f5f9;
+          gap: 0.75rem;
+        }
+
+        .tdv-header-left {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #334155;
+        }
+
+        .tdv-header-icon-green { color: #16a34a; }
+        .tdv-header-icon-red   { color: #dc2626; }
+
+        .tdv-count-badge {
+          font-size: 0.65rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 99px;
+          background: #f1f5f9;
+          color: #64748b;
+          letter-spacing: 0.04em;
+        }
+
+        .tdv-export-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 5px 12px;
+          border-radius: 8px;
+          border: 1px solid #bbf7d0;
+          background: #f0fdf4;
+          color: #15803d;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s;
+          white-space: nowrap;
+        }
+        .tdv-export-btn:hover { background: #dcfce7; }
+
+        /* ── Table ── */
+        .tdv-table-wrap { overflow-x: auto; }
+
+        .tdv-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.83rem;
+        }
+
+        .tdv-table th {
+          text-align: left;
+          font-size: 0.62rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #94a3b8;
+          padding: 0.6rem 1rem;
+          background: #f8fafc;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .tdv-table td {
+          padding: 0.75rem 1rem;
+          border-bottom: 1px solid #f8fafc;
+          vertical-align: middle;
+        }
+
+        .tdv-table tr:last-child td { border-bottom: none; }
+        .tdv-table tr:hover td { background: #fafbfd; }
+
+        .tdv-unit-cell {
+          font-weight: 700;
+          color: #0f172a;
+          font-size: 0.82rem;
+        }
+
+        .tdv-name-cell {
+          color: #64748b;
+          font-size: 0.8rem;
+        }
+
+        .tdv-opcion-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 3px 10px;
+          border-radius: 99px;
+          font-size: 0.68rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+
+        .tdv-coef {
+          font-family: 'Courier New', monospace;
+          font-weight: 700;
+          font-size: 0.8rem;
+          color: #334155;
+          text-align: right;
+        }
+
+        /* ── Empty ── */
+        .tdv-empty {
+          padding: 2rem 1rem;
+          text-align: center;
+          font-size: 0.82rem;
+        }
+        .tdv-empty-waiting { color: #94a3b8; font-style: italic; }
+        .tdv-empty-all     { color: #16a34a; font-weight: 700; }
+
+        /* ── Pending grid ── */
+        .tdv-pending-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 0.5rem;
+          padding: 0.9rem 1rem;
+        }
+
+        .tdv-pending-item {
+          padding: 0.6rem 0.75rem;
+          border-radius: 9px;
+          background: #fef2f2;
+          border: 1px solid #fee2e2;
+        }
+
+        .tdv-pending-unit {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #0f172a;
+        }
+
+        .tdv-pending-name {
+          font-size: 0.67rem;
+          color: #94a3b8;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-top: 1px;
+        }
+
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+      `}</style>
+
+            <div className="tdv-wrap">
+                {/* VOTANTES */}
+                <div className="tdv-panel">
+                    <div className="tdv-panel-header">
+                        <div className="tdv-header-left">
+                            <CheckCircle2 size={16} className="tdv-header-icon-green" />
+                            Votantes registrados
+                            <span className="tdv-count-badge">{votos.length}</span>
+                        </div>
+                        <button className="tdv-export-btn" onClick={exportarExcel}>
+                            <Download size={12} /> Exportar
+                        </button>
+                    </div>
+
+                    {votos.length === 0 ? (
+                        <div className="tdv-empty tdv-empty-waiting">Esperando el primer voto…</div>
+                    ) : (
+                        <div className="tdv-table-wrap">
+                            <table className="tdv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Unidad</th>
+                                        <th>Nombre</th>
+                                        <th style={{ textAlign: 'center' }}>Voto</th>
+                                        <th style={{ textAlign: 'right' }}>Coef.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {votos.map((v, i) => (
+                                        <tr key={i}>
+                                            <td className="tdv-unit-cell">{v.usuario}</td>
+                                            <td className="tdv-name-cell">{v.nombre}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <span className="tdv-opcion-chip" style={chipStyle(v.opcion)}>
+                                                    {v.opcion}
+                                                </span>
+                                            </td>
+                                            <td className="tdv-coef">{v.coeficiente.toFixed(2)}%</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* PENDIENTES */}
+                <div className="tdv-panel">
+                    <div className="tdv-panel-header">
+                        <div className="tdv-header-left">
+                            <UserX size={16} className="tdv-header-icon-red" />
+                            Pendientes de votar
+                            <span className="tdv-count-badge">{pendientes.length}</span>
+                        </div>
+                    </div>
+
+                    {pendientes.length === 0 ? (
+                        <div className="tdv-empty tdv-empty-all">🎉 ¡Todos los propietarios han votado!</div>
+                    ) : (
+                        <div className="tdv-pending-grid">
+                            {pendientes.map(p => (
+                                <div key={p.id} className="tdv-pending-item">
+                                    <div className="tdv-pending-unit">{p.usuario}</div>
+                                    <div className="tdv-pending-name">{p.nombre}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </>
     )
 }

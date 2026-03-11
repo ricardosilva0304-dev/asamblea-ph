@@ -1,8 +1,23 @@
 import PreguntaEnVivo from '@/components/PreguntaEnVivo'
 import BannerMensaje from '@/components/BannerMensaje'
 import EstadoCuentaPropietario from '@/components/EstadoCuentaPropietario'
+import { createClient } from '@/utils/supabase/server'
 
-export default function PropietarioDashboard() {
+export default async function PropietarioDashboard() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let nombre = 'Propietario'
+  let usuario = ''
+  if (user) {
+    const { data } = await supabase
+      .from('perfiles').select('nombre, usuario').eq('id', user.id).single()
+    if (data) { nombre = data.nombre; usuario = data.usuario }
+  }
+
+  // Iniciales para el avatar
+  const iniciales = nombre.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
+
   return (
     <>
       <style>{`
@@ -141,7 +156,44 @@ export default function PropietarioDashboard() {
           background: #e8ecf2;
         }
 
-        /* ── Footer ── */
+        /* ── Hero user strip ── */
+        .prop-hero-user {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          background: rgba(255,255,255,0.15);
+          border-radius: 10px;
+          padding: 0.5rem 0.75rem;
+          margin-top: 0.75rem;
+        }
+
+        .prop-hero-avatar {
+          width: 28px; height: 28px;
+          border-radius: 8px;
+          background: rgba(255,255,255,0.25);
+          color: white;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 0.68rem;
+          font-weight: 800;
+          letter-spacing: 0.03em;
+          flex-shrink: 0;
+        }
+
+        .prop-hero-user-name {
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.95);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .prop-hero-user-unit {
+          font-size: 0.65rem;
+          color: rgba(255,255,255,0.6);
+          margin-top: 1px;
+          font-weight: 500;
+        }
         .prop-footer {
           text-align: center;
           font-size: 0.62rem;
@@ -173,9 +225,16 @@ export default function PropietarioDashboard() {
           {/* Hero */}
           <div className="prop-hero">
             <div className="prop-hero-icon">🏛️</div>
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div className="prop-hero-title">Sala de Asamblea</div>
               <div className="prop-hero-sub">Votaciones en tiempo real</div>
+              <div className="prop-hero-user">
+                <div className="prop-hero-avatar">{iniciales}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div className="prop-hero-user-name">{nombre}</div>
+                  {usuario && <div className="prop-hero-user-unit">{usuario}</div>}
+                </div>
+              </div>
             </div>
           </div>
 

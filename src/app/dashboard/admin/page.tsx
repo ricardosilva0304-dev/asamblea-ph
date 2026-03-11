@@ -1,6 +1,7 @@
 import ResultadosAdmin from '@/components/ResultadosAdmin'
 import BannerMensaje from '@/components/BannerMensaje'
 import FormCrearUsuario from '@/components/FormCrearUsuario'
+import ListaPropietarios from '@/components/ListaPropietarios'
 
 export default function AdminDashboard() {
   return (
@@ -169,6 +170,7 @@ export default function AdminDashboard() {
 
           <div className="admin-section-label">👤 Propietarios</div>
           <FormCrearUsuario />
+          <ListaPropietarios />
         </main>
       </div>
     </>

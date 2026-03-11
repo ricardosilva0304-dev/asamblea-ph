@@ -1,7 +1,5 @@
 import { login } from './actions'
 import { Lock, User } from 'lucide-react'
-// Importa Image de Next.js si prefieres optimizar la imagen (opcional)
-// import Image from 'next/image'
 
 export default async function LoginPage({
   searchParams,
@@ -12,90 +10,297 @@ export default async function LoginPage({
   const error = params?.error
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 relative overflow-hidden">
-      {/* Fondo claro animado sutil (mantiene el dinamismo pero en tonos muy suaves) */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-200/30 blur-[120px]"></div>
-        <div className="absolute top-[30%] -right-[10%] w-[40%] h-[40%] rounded-full bg-indigo-200/30 blur-[120px]"></div>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Tarjeta de Login (Ahora blanca con una sombra suave) */}
-        <div className="bg-white border border-slate-100 p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/60">
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-          <div className="flex flex-col items-center text-center mb-10">
-            {/* 
-              CONTENEDOR DEL LOGO 
-              Reemplaza '/tu-logo.png' por la ruta de tu imagen real. 
-              Asegúrate de que la imagen esté dentro de la carpeta 'public' de tu proyecto Next.js.
-            */}
-            <div className="h-24 w-auto mb-6 flex items-center justify-center">
-              <img
-                src="/logo.png"
-                alt="Logo"
-                className="max-h-full object-contain drop-shadow-sm"
-              />
+        .login-root {
+          min-height: 100dvh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1.5rem;
+          font-family: 'DM Sans', sans-serif;
+          background-color: #f0f4f8;
+          background-image:
+            radial-gradient(ellipse 80% 60% at 20% 10%, rgba(147, 197, 253, 0.35) 0%, transparent 60%),
+            radial-gradient(ellipse 60% 50% at 80% 80%, rgba(165, 180, 252, 0.25) 0%, transparent 60%),
+            url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='%23cbd5e1' fill-opacity='0.3'/%3E%3C/svg%3E");
+          position: relative;
+        }
+
+        .card {
+          background: rgba(255, 255, 255, 0.92);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+          border-radius: 2rem;
+          padding: 2.5rem 2rem;
+          width: 100%;
+          max-width: 420px;
+          box-shadow:
+            0 4px 6px -1px rgba(0,0,0,0.04),
+            0 20px 60px -10px rgba(100, 120, 180, 0.18),
+            0 0 0 1px rgba(255,255,255,0.6) inset;
+          animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes cardIn {
+          from { opacity: 0; transform: translateY(24px) scale(0.98); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ── Header ── */
+        .header {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 2.25rem;
+          text-align: center;
+          animation: fadeUp 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .logo-wrap {
+          width: 80px;
+          height: 80px;
+          border-radius: 22px;
+          background: white;
+          border: 1.5px solid rgba(203, 213, 225, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1.25rem;
+          box-shadow: 0 4px 16px rgba(100, 120, 180, 0.12), 0 1px 3px rgba(0,0,0,0.06);
+          overflow: hidden;
+          padding: 10px;
+        }
+
+        .logo-wrap img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .divider-line {
+          width: 32px;
+          height: 2px;
+          background: linear-gradient(90deg, #3b82f6, #818cf8);
+          border-radius: 99px;
+          margin: 0.65rem auto 0.5rem;
+        }
+
+        .title {
+          font-family: 'Playfair Display', Georgia, serif;
+          font-size: 1.85rem;
+          font-weight: 700;
+          color: #0f172a;
+          letter-spacing: -0.5px;
+          line-height: 1.15;
+        }
+
+        .subtitle {
+          font-size: 0.78rem;
+          color: #94a3b8;
+          font-weight: 400;
+          letter-spacing: 0.02em;
+          margin-top: 0.35rem;
+          line-height: 1.5;
+        }
+
+        /* ── Form ── */
+        .form { display: flex; flex-direction: column; gap: 1.1rem; }
+
+        .field-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+          animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .field-wrap:nth-child(1) { animation-delay: 0.15s; }
+        .field-wrap:nth-child(2) { animation-delay: 0.22s; }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        label {
+          font-size: 0.68rem;
+          font-weight: 600;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-left: 0.25rem;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-icon {
+          position: absolute;
+          left: 1rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+          pointer-events: none;
+          transition: color 0.2s;
+          display: flex;
+        }
+
+        input {
+          width: 100%;
+          padding: 0.9rem 1rem 0.9rem 3rem;
+          background: #f8fafc;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 14px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 1rem;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+
+        input:focus {
+          background: #fff;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        input:focus ~ .input-icon,
+        .input-wrap:focus-within .input-icon {
+          color: #3b82f6;
+        }
+
+        /* ── Error ── */
+        .error-box {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 0.8rem 1rem;
+          border-radius: 12px;
+          font-size: 0.85rem;
+          text-align: center;
+          font-weight: 500;
+          animation: fadeUp 0.3s ease both;
+        }
+
+        /* ── Button ── */
+        .btn-submit {
+          width: 100%;
+          padding: 1rem;
+          background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+          color: white;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 1rem;
+          font-weight: 600;
+          border: none;
+          border-radius: 14px;
+          cursor: pointer;
+          transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+          letter-spacing: 0.01em;
+          margin-top: 0.4rem;
+          animation: fadeUp 0.5s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+
+        .btn-submit:hover {
+          filter: brightness(1.06);
+          box-shadow: 0 6px 28px rgba(59, 130, 246, 0.45);
+          transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+          transform: scale(0.985) translateY(0);
+          filter: brightness(0.97);
+        }
+
+        /* ── Footer ── */
+        .card-footer {
+          margin-top: 1.75rem;
+          text-align: center;
+          animation: fadeUp 0.5s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .footer-dots {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.4rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .dot {
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: #cbd5e1;
+        }
+
+        .footer-text {
+          font-size: 0.67rem;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          font-weight: 500;
+        }
+
+        /* ── Mobile tweaks ── */
+        @media (max-width: 400px) {
+          .card { padding: 2rem 1.5rem; border-radius: 1.5rem; }
+          .title { font-size: 1.65rem; }
+        }
+      `}</style>
+
+      <div className="login-root">
+        <div className="card">
+          <div className="header">
+            <div className="logo-wrap">
+              <img src="/logo.png" alt="Parque de las Flores" />
             </div>
-
-            <h1 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Asamblea PH</h1>
-            <p className="text-slate-500 font-medium text-sm">Agrupación Residencial El Parque de las Flores</p>
+            <div className="title">Asamblea PH</div>
+            <div className="divider-line" />
+            <div className="subtitle">Agrupación Residencial<br />El Parque de las Flores</div>
           </div>
 
-          <form className="space-y-5">
-            <div className="group">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
-                Usuario
-              </label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-                <input
-                  name="usuario"
-                  type="text"
-                  required
-                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-lg"
-                  placeholder=""
-                />
+          <form className="form">
+            <div className="field-wrap">
+              <label htmlFor="usuario">Usuario</label>
+              <div className="input-wrap">
+                <span className="input-icon"><User size={18} /></span>
+                <input id="usuario" name="usuario" type="text" required autoComplete="username" />
               </div>
             </div>
 
-            <div className="group">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-lg"
-                  placeholder=""
-                />
+            <div className="field-wrap">
+              <label htmlFor="password">Contraseña</label>
+              <div className="input-wrap">
+                <span className="input-icon"><Lock size={18} /></span>
+                <input id="password" name="password" type="password" required autoComplete="current-password" />
               </div>
             </div>
 
-            {/* Mensaje de error adaptado a modo claro */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-2xl text-sm text-center font-medium animate-pulse">
-                {error}
-              </div>
+              <div className="error-box" role="alert">{error}</div>
             )}
 
-            <button
-              formAction={login}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold py-5 rounded-2xl transition-all shadow-lg shadow-blue-600/25 mt-4 text-lg border-none"
-            >
+            <button type="submit" formAction={login} className="btn-submit">
               Entrar a la Sesión
             </button>
           </form>
 
-          <div className="mt-10 text-center">
-            <p className="text-slate-400 text-[10px] uppercase tracking-widest">
-              Seguridad Privada • Asamblea PH 2026
-            </p>
+          <div className="card-footer">
+            <div className="footer-dots">
+              <div className="dot" /><div className="dot" /><div className="dot" />
+            </div>
+            <div className="footer-text">Seguridad Privada · Asamblea PH 2026</div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

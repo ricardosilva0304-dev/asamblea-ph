@@ -3,33 +3,62 @@
 import { useState, useEffect } from 'react'
 
 export default function Reloj() {
-  // Inicializamos en null para que el servidor y el cliente tengan el mismo valor inicial
   const [fecha, setFecha] = useState<Date | null>(null)
 
   useEffect(() => {
-    // Esto solo corre en el cliente
     setFecha(new Date())
-
-    const timer = setInterval(() => {
-      setFecha(new Date())
-    }, 1000)
-
+    const timer = setInterval(() => setFecha(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
-  // Mientras no haya fecha (durante la carga inicial), mostramos algo vacío o un placeholder
-  if (!fecha) {
-    return <div className="h-10"></div> // O un esqueleto de carga
-  }
+  if (!fecha) return <div style={{ width: 90, height: 36 }} />
+
+  const fechaStr = fecha.toLocaleDateString('es-ES', {
+    weekday: 'short', day: 'numeric', month: 'short'
+  })
+
+  const horaStr = fecha.toLocaleTimeString('es-ES', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
 
   return (
-    <div className="flex flex-col items-end text-slate-400">
-      <span className="hidden md:block text-[10px] uppercase tracking-widest font-bold">
-        {fecha.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
-      </span>
-      <span className="text-sm font-mono font-bold text-white">
-        {fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-      </span>
-    </div>
+    <>
+      <style>{`
+        .reloj-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          line-height: 1.2;
+          flex-shrink: 0;
+        }
+
+        .reloj-fecha {
+          font-size: 0.62rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #94a3b8;
+        }
+
+        .reloj-hora {
+          font-family: 'Courier New', 'Courier', monospace;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #0f172a;
+          letter-spacing: 0.04em;
+          font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 480px) {
+          .reloj-fecha { display: none; }
+          .reloj-hora  { font-size: 0.85rem; }
+        }
+      `}</style>
+
+      <div className="reloj-wrap">
+        <span className="reloj-fecha">{fechaStr}</span>
+        <span className="reloj-hora">{horaStr}</span>
+      </div>
+    </>
   )
 }

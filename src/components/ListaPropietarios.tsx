@@ -9,7 +9,6 @@ interface Propietario {
     nombre: string
     usuario: string
     coeficiente: number
-    created_at: string
 }
 
 export default function ListaPropietarios() {
@@ -20,9 +19,9 @@ export default function ListaPropietarios() {
     const cargar = async () => {
         const { data } = await supabase
             .from('perfiles')
-            .select('id, nombre, usuario, coeficiente, created_at')
+            .select('id, nombre, usuario, coeficiente')
             .eq('rol', 'propietario')
-            .order('created_at', { ascending: true })
+            .order('nombre', { ascending: true })
         if (data) setPropietarios(data)
         setCargando(false)
     }
@@ -247,7 +246,6 @@ export default function ListaPropietarios() {
                                     <th>Propietario</th>
                                     <th>Coef.</th>
                                     <th>Rol</th>
-                                    <th style={{ textAlign: 'right' }}>Registrado</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -270,13 +268,6 @@ export default function ListaPropietarios() {
                                         </td>
                                         <td>
                                             <span className="lp-rol-chip">propietario</span>
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <span className="lp-date">
-                                                {new Date(p.created_at).toLocaleDateString('es-CO', {
-                                                    day: '2-digit', month: 'short', year: 'numeric'
-                                                })}
-                                            </span>
                                         </td>
                                     </tr>
                                 ))}

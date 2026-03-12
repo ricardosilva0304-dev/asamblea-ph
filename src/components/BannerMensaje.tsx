@@ -7,37 +7,37 @@ import { Megaphone } from 'lucide-react'
 type Mensaje = { texto: string; estado: string }
 
 export default function BannerMensaje() {
-    const [mensajeActivo, setMensajeActivo] = useState<string | null>(null)
-    const supabase = createClient()
+  const [mensajeActivo, setMensajeActivo] = useState<string | null>(null)
+  const supabase = createClient()
 
-    useEffect(() => {
-        const cargarMensaje = async () => {
-            const { data } = await supabase
-                .from('mensajes')
-                .select('*')
-                .eq('estado', 'activo')
-                .order('creado_en', { ascending: false })
-                .limit(1)
-                .single()
-            if (data) setMensajeActivo(data.texto)
-        }
-        cargarMensaje()
+  useEffect(() => {
+    const cargarMensaje = async () => {
+      const { data } = await supabase
+        .from('mensajes')
+        .select('*')
+        .eq('estado', 'activo')
+        .order('creado_en', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (data) setMensajeActivo(data.texto)
+    }
+    cargarMensaje()
 
-        const canal = supabase.channel('mensajes-en-vivo')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'mensajes' }, (payload) => {
-                const nuevoMensaje = payload.new as Mensaje
-                if (nuevoMensaje.estado === 'activo') setMensajeActivo(nuevoMensaje.texto)
-                else setMensajeActivo(null)
-            }).subscribe()
+    const canal = supabase.channel('mensajes-en-vivo')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mensajes' }, (payload) => {
+        const nuevoMensaje = payload.new as Mensaje
+        if (nuevoMensaje.estado === 'activo') setMensajeActivo(nuevoMensaje.texto)
+        else setMensajeActivo(null)
+      }).subscribe()
 
-        return () => { supabase.removeChannel(canal) }
-    }, [supabase])
+    return () => { supabase.removeChannel(canal) }
+  }, [supabase])
 
-    if (!mensajeActivo) return null
+  if (!mensajeActivo) return null
 
-    return (
-        <>
-            <style>{`
+  return (
+    <>
+      <style>{`
         .banner-wrap {
           position: relative;
           overflow: hidden;
@@ -118,22 +118,22 @@ export default function BannerMensaje() {
         }
       `}</style>
 
-            <div className="banner-wrap">
-                <div className="banner-stripe" />
-                <div className="banner-inner">
-                    <div className="banner-icon-wrap">
-                        <Megaphone size={20} strokeWidth={2} />
-                    </div>
-                    <div>
-                        <div className="banner-label">Aviso Importante</div>
-                        <p className="banner-text">{mensajeActivo}</p>
-                    </div>
-                </div>
-                <div className="banner-pulse">
-                    <div className="banner-pulse-ring" />
-                    <div className="banner-pulse-dot" />
-                </div>
-            </div>
-        </>
-    )
+      <div className="banner-wrap">
+        <div className="banner-stripe" />
+        <div className="banner-inner">
+          <div className="banner-icon-wrap">
+            <Megaphone size={20} strokeWidth={2} />
+          </div>
+          <div>
+            <div className="banner-label">Aviso Importante</div>
+            <p className="banner-text">{mensajeActivo}</p>
+          </div>
+        </div>
+        <div className="banner-pulse">
+          <div className="banner-pulse-ring" />
+          <div className="banner-pulse-dot" />
+        </div>
+      </div>
+    </>
+  )
 }

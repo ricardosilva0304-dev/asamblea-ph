@@ -5,79 +5,79 @@ import { createClient } from '@/utils/supabase/client'
 import { CheckCircle2, Clock, Loader2 } from 'lucide-react'
 
 type Pregunta = { id: string; titulo: string; descripcion?: string; estado: string; opciones: string[] }
-type Perfil = { id: string; coeficiente: number }
+type Perfil   = { id: string; coeficiente: number }
 
 export default function PreguntaEnVivo() {
-    const [preguntaActiva, setPreguntaActiva] = useState<Pregunta | null>(null)
-    const [perfil, setPerfil] = useState<Perfil | null>(null)
-    const [yaVote, setYaVote] = useState(false)
-    const [opcionVotada, setOpcionVotada] = useState<string | null>(null)
-    const [votando, setVotando] = useState<string | null>(null) // opción en proceso
-    const [cargando, setCargando] = useState(true)
-    const supabase = createClient()
+  const [preguntaActiva, setPreguntaActiva] = useState<Pregunta | null>(null)
+  const [perfil,         setPerfil]         = useState<Perfil | null>(null)
+  const [yaVote,         setYaVote]         = useState(false)
+  const [opcionVotada,   setOpcionVotada]   = useState<string | null>(null)
+  const [votando,        setVotando]        = useState<string | null>(null) // opción en proceso
+  const [cargando,       setCargando]       = useState(true)
+  const supabase = createClient()
 
-    useEffect(() => {
-        const cargarDatos = async () => {
-            setCargando(true)
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) { setCargando(false); return }
+  useEffect(() => {
+    const cargarDatos = async () => {
+      setCargando(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setCargando(false); return }
 
-            const { data: perfilData } = await supabase
-                .from('perfiles').select('id, coeficiente').eq('id', user.id).single()
-            if (perfilData) setPerfil(perfilData)
+      const { data: perfilData } = await supabase
+        .from('perfiles').select('id, coeficiente').eq('id', user.id).single()
+      if (perfilData) setPerfil(perfilData)
 
-            const { data: pregunta } = await supabase
-                .from('preguntas').select('*').eq('estado', 'activa').single()
+      const { data: pregunta } = await supabase
+        .from('preguntas').select('*').eq('estado', 'activa').maybeSingle()
 
-            if (pregunta) {
-                setPreguntaActiva(pregunta)
-                const { data: votoExistente } = await supabase
-                    .from('votos').select('opcion').eq('pregunta_id', pregunta.id).eq('usuario_id', user.id).maybeSingle()
-                if (votoExistente) {
-                    setYaVote(true)
-                    setOpcionVotada(votoExistente.opcion)
-                } else {
-                    setYaVote(false)
-                    setOpcionVotada(null)
-                }
-            } else {
-                setPreguntaActiva(null)
-                setYaVote(false)
-                setOpcionVotada(null)
-            }
-            setCargando(false)
+      if (pregunta) {
+        setPreguntaActiva(pregunta)
+        const { data: votoExistente } = await supabase
+          .from('votos').select('opcion').eq('pregunta_id', pregunta.id).eq('usuario_id', user.id).maybeSingle()
+        if (votoExistente) {
+          setYaVote(true)
+          setOpcionVotada(votoExistente.opcion)
+        } else {
+          setYaVote(false)
+          setOpcionVotada(null)
         }
-
-        cargarDatos()
-
-        const canal = supabase.channel('preguntas-propietario')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'preguntas' }, cargarDatos)
-            .subscribe()
-
-        return () => { supabase.removeChannel(canal) }
-    }, [supabase])
-
-    const emitirVoto = async (opcion: string) => {
-        if (!preguntaActiva || !perfil || yaVote || votando) return
-        setVotando(opcion)
-
-        const { error } = await supabase.from('votos').insert({
-            pregunta_id: preguntaActiva.id,
-            usuario_id: perfil.id,
-            opcion,
-            coeficiente: perfil.coeficiente
-        })
-
-        if (!error) {
-            setYaVote(true)
-            setOpcionVotada(opcion)
-        }
-        setVotando(null)
+      } else {
+        setPreguntaActiva(null)
+        setYaVote(false)
+        setOpcionVotada(null)
+      }
+      setCargando(false)
     }
 
-    return (
-        <>
-            <style>{`
+    cargarDatos()
+
+    const canal = supabase.channel('preguntas-propietario')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'preguntas' }, cargarDatos)
+      .subscribe()
+
+    return () => { supabase.removeChannel(canal) }
+  }, [supabase])
+
+  const emitirVoto = async (opcion: string) => {
+    if (!preguntaActiva || !perfil || yaVote || votando) return
+    setVotando(opcion)
+
+    const { error } = await supabase.from('votos').insert({
+      pregunta_id: preguntaActiva.id,
+      usuario_id:  perfil.id,
+      opcion,
+      coeficiente: perfil.coeficiente
+    })
+
+    if (!error) {
+      setYaVote(true)
+      setOpcionVotada(opcion)
+    }
+    setVotando(null)
+  }
+
+  return (
+    <>
+      <style>{`
         /* ── Card ── */
         .pev-card {
           background: white;
@@ -311,74 +311,74 @@ export default function PreguntaEnVivo() {
         .pev-hr { height:1px; background:#f1f5f9; margin: 0; }
       `}</style>
 
-            <div className="pev-card">
-                {cargando ? (
-                    <div className="pev-loading">
-                        <Loader2 size={24} style={{ animation: 'spin 1s linear infinite', color: '#94a3b8' }} />
-                        <span>Cargando votación…</span>
-                    </div>
-                ) : !preguntaActiva ? (
-                    <div className="pev-waiting">
-                        <div className="pev-waiting-icon"><Clock size={26} /></div>
-                        <div className="pev-waiting-title">Sin votación activa</div>
-                        <p className="pev-waiting-sub">El administrador aún no ha iniciado<br />ninguna votación.</p>
-                        <div className="pev-waiting-pulse">
-                            <div className="pev-waiting-dot" />
-                            Esperando en tiempo real…
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Header de pregunta */}
-                        <div className="pev-q-header">
-                            <div className="pev-q-label">Pregunta activa</div>
-                            <div className="pev-q-title">{preguntaActiva.titulo}</div>
-                            {preguntaActiva.descripcion && (
-                                <p className="pev-q-desc">{preguntaActiva.descripcion}</p>
-                            )}
-                        </div>
-
-                        {yaVote ? (
-                            <div className="pev-success">
-                                <div className="pev-success-icon">
-                                    <CheckCircle2 size={32} />
-                                </div>
-                                <div className="pev-success-title">¡Voto registrado!</div>
-                                <p className="pev-success-sub">Tu participación ha sido confirmada.</p>
-                                {opcionVotada && (
-                                    <div className="pev-success-chip">
-                                        ✓ Votaste por: {opcionVotada}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="pev-options">
-                                {preguntaActiva.opciones.map((opcion) => {
-                                    const isLoading = votando === opcion
-                                    return (
-                                        <button
-                                            key={opcion}
-                                            className={`pev-opt-btn ${isLoading ? 'loading' : ''}`}
-                                            onClick={() => emitirVoto(opcion)}
-                                            disabled={!!votando}
-                                        >
-                                            <span>{opcion}</span>
-                                            <span className="pev-opt-arrow">
-                                                {isLoading
-                                                    ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                                                    : '→'
-                                                }
-                                            </span>
-                                        </button>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </>
-                )}
+      <div className="pev-card">
+        {cargando ? (
+          <div className="pev-loading">
+            <Loader2 size={24} style={{ animation: 'spin 1s linear infinite', color: '#94a3b8' }} />
+            <span>Cargando votación…</span>
+          </div>
+        ) : !preguntaActiva ? (
+          <div className="pev-waiting">
+            <div className="pev-waiting-icon"><Clock size={26} /></div>
+            <div className="pev-waiting-title">Sin votación activa</div>
+            <p className="pev-waiting-sub">El administrador aún no ha iniciado<br />ninguna votación.</p>
+            <div className="pev-waiting-pulse">
+              <div className="pev-waiting-dot" />
+              Esperando en tiempo real…
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Header de pregunta */}
+            <div className="pev-q-header">
+              <div className="pev-q-label">Pregunta activa</div>
+              <div className="pev-q-title">{preguntaActiva.titulo}</div>
+              {preguntaActiva.descripcion && (
+                <p className="pev-q-desc">{preguntaActiva.descripcion}</p>
+              )}
             </div>
 
-            <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
-        </>
-    )
+            {yaVote ? (
+              <div className="pev-success">
+                <div className="pev-success-icon">
+                  <CheckCircle2 size={32} />
+                </div>
+                <div className="pev-success-title">¡Voto registrado!</div>
+                <p className="pev-success-sub">Tu participación ha sido confirmada.</p>
+                {opcionVotada && (
+                  <div className="pev-success-chip">
+                    ✓ Votaste por: {opcionVotada}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="pev-options">
+                {preguntaActiva.opciones.map((opcion) => {
+                  const isLoading = votando === opcion
+                  return (
+                    <button
+                      key={opcion}
+                      className={`pev-opt-btn ${isLoading ? 'loading' : ''}`}
+                      onClick={() => emitirVoto(opcion)}
+                      disabled={!!votando}
+                    >
+                      <span>{opcion}</span>
+                      <span className="pev-opt-arrow">
+                        {isLoading
+                          ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                          : '→'
+                        }
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+    </>
+  )
 }

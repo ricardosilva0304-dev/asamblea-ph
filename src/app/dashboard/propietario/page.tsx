@@ -246,7 +246,7 @@ export default async function PropietarioDashboard() {
           <PreguntaEnVivo />
 
           {/* Estado de cuenta */}
-          <div className="prop-section-label">📄 Estado de cuenta</div>
+          <div className="prop-section-label">📄 Documentos</div>
           <EstadoCuentaPropietario />
         </main>
 

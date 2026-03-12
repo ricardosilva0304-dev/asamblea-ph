@@ -247,7 +247,7 @@ export default function EstadoCuentaPropietario() {
                         <FileText size={17} />
                     </div>
                     <div>
-                        <div className="ec-prop-header-title">Estado de Cuenta</div>
+                        <div className="ec-prop-header-title">Documentos</div>
                         <div className="ec-prop-header-sub">Documentos enviados por administración</div>
                     </div>
                 </div>
@@ -262,7 +262,7 @@ export default function EstadoCuentaPropietario() {
                     <div className="ec-prop-empty">
                         <div className="ec-prop-empty-icon"><Clock size={20} /></div>
                         <div className="ec-prop-empty-title">Sin documentos aún</div>
-                        <p className="ec-prop-empty-sub">Aquí aparecerán tus estados de cuenta cuando la administración los suba.</p>
+                        <p className="ec-prop-empty-sub">Aquí aparecerán tus documentos cuando la administración los suba.</p>
                     </div>
                 ) : (
                     <div className="ec-prop-list">
